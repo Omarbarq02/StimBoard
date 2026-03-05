@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✦ Visual Stim Board</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a14; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+
+    import { PALETTES, paletteNames } from './palettes.js';
+    import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
+    import { toggleBreathing, drawBreathing } from './breathing.js';
+    import { spawnLetterBubble, updateLetterBubbles, drawLetterBubbles } from './letters.js';
+    import { moveTurtle, updateTurtle, drawTurtle, DIR_ANGLE } from './turtle.js';
+    import { toggleSpinner, isSpinnerOn, handleScroll, drawSpinner } from './spinner.js';
+    import { spawnSparkle, updateSparkles, drawSparkles } from './sparkles.js';
+    import { spawnRipple, updateRipples, drawRipples } from './ripples.js';
+    import { drawStars } from './stars.js';
+    
+    let currentPalette = 0;
+    let sparkleMode = false;
+
+    function randColor() {
+      const cols = PALETTES[paletteNames[currentPalette]];
+      const c = cols[Math.floor(Math.random() * cols.length)];
+      const j = v => Math.max(60, Math.min(255, v + Math.floor(Math.random()*40-20)));
+      return [j(c[0]), j(c[1]), j(c[2])];
+    }
+
+    loadSound('./PLOINK.mp3');
+    loadSparkleSound('./sparkle.wav');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+  
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  
+  
+    // ── Mouse / Touch ──────────────────────────────────────
+    let mouseDown = false;
+    let lastSpawn = 0;
+  
+    function spawnAt(x, y) {
+        if (y > canvas.height - 36) return;
+        const now = performance.now();
+        if (now - lastSpawn < 70) return;
+        lastSpawn = now;
+        if (sparkleMode) { 
+          spawnSparkle(x, y, randColor); 
+          spawnSparkle(x, y, randColor);
+          spawnSparkle(x, y, randColor); 
+          spawnSparkle(x, y, randColor);
+          spawnSparkle(x, y, randColor); 
+          spawnSparkle(x, y, randColor);
+          spawnSparkle(x, y, randColor); 
+          spawnSparkle(x, y, randColor);
+          playSparkle();
+        } else {
+          spawnRipple(x, y, randColor);
+          playPlink();
+        }
+      }
+  
+    canvas.addEventListener('mousedown', e => { mouseDown = true; spawnAt(e.clientX, e.clientY); });
+
+    canvas.addEventListener('mouseup',   () => mouseDown = false);
+    
+    canvas.addEventListener('mousemove', e => { if (mouseDown) spawnAt(e.clientX, e.clientY); });
+    
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+    
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+    
+    
+    document.addEventListener('keydown', e => {
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+        if (e.key === '1') toggleBreathing(showToast);
+        if (e.key === '2') { toggleSpinner(); showToast('🌀 Fidget spinner ' + (isSpinnerOn() ? 'on — scroll to spin!' : 'off')); }
+        if (e.key === '4') {
+          sparkleMode = !sparkleMode;
+          showToast('✨ Sparkle mode ' + (sparkleMode ? 'on' : 'off'));
+        }
+        if (e.key === '6') showColourPicker();
+        
+        if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+            spawnLetterBubble(e.key.toUpperCase(), canvas.width, canvas.height, randColor);
+            if (sparkleMode) playSparkle();
+            else playPlink();
+          }
+
+         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          const pos = moveTurtle(e.key, canvas.width, canvas.height);
+          if (sparkleMode) { 
+            for (let i = 0; i < 50; i++) spawnSparkle(pos.x, pos.y, randColor);
+            playSparkle();
+          } else { 
+            spawnRipple(pos.x, pos.y, randColor); 
+            playPlink(); 
+          }
+        }
+      });
+  
+    // ── Toast ──────────────────────────────────────────────
+    function showToast(msg) {
+      let t = document.getElementById('toast');
+      if (!t) { t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+      t.textContent = msg;
+      t.style.cssText = `position:fixed;top:18px;left:50%;transform:translateX(-50%);
+        background:rgba(20,25,60,0.9);color:#d2ebff;padding:10px 20px;
+        border-radius:14px;font-family:sans-serif;font-size:16px;
+        pointer-events:none;transition:opacity 0.4s;z-index:999;`;
+      t.style.opacity = '1';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.style.opacity = '0', 2000);
+    }
+  
+    // ── Colour Picker ──────────────────────────────────────
+    function showColourPicker() {
+      if (document.getElementById('colourPicker')) return;
+      const overlay = document.createElement('div');
+      overlay.id = 'colourPicker';
+      overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.6);
+        display:flex;align-items:center;justify-content:center;z-index:1000;`;
+      const card = document.createElement('div');
+      card.style.cssText = `background:rgba(18,22,56,0.97);border-radius:22px;padding:24px;
+        border:2px solid rgba(80,130,220,0.4);max-width:520px;width:90%;`;
+      card.innerHTML = `<h2 style="color:#c8e4ff;font-family:sans-serif;margin-bottom:16px;text-align:center">🎨 Choose your colours!</h2>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="paletteGrid"></div>`;
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+  
+      const grid = card.querySelector('#paletteGrid');
+      paletteNames.forEach((name, i) => {
+        const btn = document.createElement('button');
+        const cols = PALETTES[name];
+        const sel = i === currentPalette;
+        btn.style.cssText = `background:${sel?'rgba(50,68,135,0.95)':'rgba(28,36,92,0.8)'};
+          border:2px solid ${sel?'#a0d7ff':'rgba(58,80,162,0.7)'};border-radius:11px;
+          padding:8px;cursor:pointer;display:flex;align-items:center;gap:6px;`;
+        btn.innerHTML = `<span>${cols.slice(0,5).map(c=>`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgb(${c})"</span>`).join('')}</span>
+          <span style="color:#e6f5ff;font-size:13px;font-family:sans-serif">${name}</span>`;
+        btn.onclick = () => { currentPalette = i; document.body.removeChild(overlay); showToast('Palette: ' + name); };
+        grid.appendChild(btn);
+      });
+  
+      overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+    }
+
+  
+  // ── Hint Bar ───────────────────────────────────────────
+  function drawHintBar() {
+    const bh = 36;
+    const y = canvas.height - bh;
+    ctx.fillStyle = 'rgba(8,10,30,0.8)';
+    ctx.fillRect(0, y, canvas.width, bh);
+    ctx.fillStyle = 'rgba(125,162,212,0.9)';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('🖱 Click → ripples/sparkles     1 Breathe     2 Fidget spinner     4 Sparkles     6 Colours', 10, y + 14);
+    ctx.fillText('Fidget: scroll to spin fast!', 10, y + 28);
+  }
+  
+  window.addEventListener('wheel', handleScroll);
+  
+    // ── Loop ───────────────────────────────────────────────
+    function loop() {
+      ctx.fillStyle = '#0a0a14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawStars(ctx);
+      updateRipples(); drawRipples(ctx);
+      updateSparkles(); drawSparkles(ctx);
+      updateLetterBubbles(); drawLetterBubbles(ctx);
+      drawBreathing(ctx, canvas, showToast);
+      drawSpinner(ctx, canvas);
+      updateTurtle(); drawTurtle(ctx);
+      drawHintBar();
+      requestAnimationFrame(loop);
+    }
+  
+    loop();
+</script>
+</body>
+</html>
