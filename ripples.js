@@ -9,7 +9,7 @@ export function updateRipples() {
     const r = ripples[i];
     r.radius += 0.7;
     r.alpha -= 0.5 + (r.radius / 160) * 0.4;
-    if (r.radius >= 160 || r.alpha <= 0) ripples.splice(i, 1);
+    if (r.radius >= 180 || r.alpha <= 0) ripples.splice(i, 1);
   }
 }
 

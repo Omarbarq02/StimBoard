@@ -5,11 +5,16 @@ const FRICTION = 0.988;
 const MIN_SPEED = 0.6;
 const MAX_SPEED = 40;
 
-const ARM_COLORS = [
+let spinnerColors = [
   [[255,110,160],[255,180,210]],
   [[100,190,255],[180,230,255]],
   [[120,240,160],[200,255,220]],
 ];
+
+export function setSpinnerColors(palette) {
+  const cols = palette.slice(0, 3);
+  spinnerColors = cols.map(c => [c, c.map(v => Math.min(255, v + 60))]);
+}
 
 function drawSpinnerArm(ctx, cx, cy, angleDeg, colors) {
   const angleRad = angleDeg * Math.PI / 180;
@@ -47,7 +52,6 @@ function drawSpinnerArm(ctx, cx, cy, angleDeg, colors) {
 }
 
 export function isSpinnerOn() { return spinnerOn; }
-
 export function toggleSpinner() { spinnerOn = !spinnerOn; }
 
 export function handleScroll(e) {
@@ -67,7 +71,7 @@ export function drawSpinner(ctx, canvas) {
     : Math.min(-MIN_SPEED, spinnerSpeed * FRICTION);
 
   for (let i = 0; i < 3; i++) {
-    drawSpinnerArm(ctx, cx, cy, spinnerAngle + i * 120, ARM_COLORS[i]);
+    drawSpinnerArm(ctx, cx, cy, spinnerAngle + i * 120, spinnerColors[i]);
   }
 
   ctx.beginPath();

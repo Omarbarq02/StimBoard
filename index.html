@@ -18,12 +18,12 @@
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
     import { toggleBreathing, drawBreathing } from './breathing.js';
     import { spawnLetterBubble, updateLetterBubbles, drawLetterBubbles } from './letters.js';
-    import { moveTurtle, updateTurtle, drawTurtle, DIR_ANGLE } from './turtle.js';
-    import { toggleSpinner, isSpinnerOn, handleScroll, drawSpinner } from './spinner.js';
+    import { keyDown, keyUp, updateTurtle, drawTurtle, setTurtleColor } from './turtle.js';
+    import { toggleSpinner, isSpinnerOn, handleScroll, drawSpinner, setSpinnerColors } from './spinner.js';
     import { spawnSparkle, updateSparkles, drawSparkles } from './sparkles.js';
     import { spawnRipple, updateRipples, drawRipples } from './ripples.js';
-    import { drawStars } from './stars.js';
-    
+    import { drawStars, updateStars, setStarLevel } from './stars.js';
+
     let currentPalette = 0;
     let sparkleMode = false;
 
@@ -53,25 +53,18 @@
     let lastSpawn = 0;
   
     function spawnAt(x, y) {
-        if (y > canvas.height - 36) return;
-        const now = performance.now();
-        if (now - lastSpawn < 70) return;
-        lastSpawn = now;
-        if (sparkleMode) { 
-          spawnSparkle(x, y, randColor); 
-          spawnSparkle(x, y, randColor);
-          spawnSparkle(x, y, randColor); 
-          spawnSparkle(x, y, randColor);
-          spawnSparkle(x, y, randColor); 
-          spawnSparkle(x, y, randColor);
-          spawnSparkle(x, y, randColor); 
-          spawnSparkle(x, y, randColor);
-          playSparkle();
-        } else {
-          spawnRipple(x, y, randColor);
-          playPlink();
-        }
+      if (y > canvas.height - 36) return;
+      const now = performance.now();
+      if (now - lastSpawn < rippleDelay) return;
+      lastSpawn = now;
+      if (sparkleMode) { 
+        for (let i = 0; i < maxSparklesPerClick; i++) spawnSparkle(x, y, randColor);
+        playSparkle();
+      } else {
+        spawnRipple(x, y, randColor);
+        playPlink();
       }
+    }
   
     canvas.addEventListener('mousedown', e => { mouseDown = true; spawnAt(e.clientX, e.clientY); });
 
@@ -85,13 +78,25 @@
     
     
     document.addEventListener('keydown', e => {
-        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        keyDown(e.key, canvas.width, canvas.height, (x, y) => {
+          if (sparkleMode) { 
+            for (let i = 0; i < 20; i++) spawnSparkle(x, y, randColor); 
+            playSparkle(); 
+          } else { 
+            spawnRipple(x, y, randColor); 
+            playPlink(); 
+          }
+        });
+      }
         if (e.key === '1') toggleBreathing(showToast);
         if (e.key === '2') { toggleSpinner(); showToast('🌀 Fidget spinner ' + (isSpinnerOn() ? 'on — scroll to spin!' : 'off')); }
         if (e.key === '4') {
           sparkleMode = !sparkleMode;
           showToast('✨ Sparkle mode ' + (sparkleMode ? 'on' : 'off'));
         }
+        if (e.key === '5') showSensoryPicker();
         if (e.key === '6') showColourPicker();
         
         if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
@@ -100,17 +105,13 @@
             else playPlink();
           }
 
-         if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-          e.preventDefault();
-          const pos = moveTurtle(e.key, canvas.width, canvas.height);
-          if (sparkleMode) { 
-            for (let i = 0; i < 50; i++) spawnSparkle(pos.x, pos.y, randColor);
-            playSparkle();
-          } else { 
-            spawnRipple(pos.x, pos.y, randColor); 
-            playPlink(); 
-          }
-        }
+         
+      });
+
+    
+    
+      document.addEventListener('keyup', e => {
+        keyUp(e.key);
       });
   
     // ── Toast ──────────────────────────────────────────────
@@ -152,12 +153,78 @@
           padding:8px;cursor:pointer;display:flex;align-items:center;gap:6px;`;
         btn.innerHTML = `<span>${cols.slice(0,5).map(c=>`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgb(${c})"</span>`).join('')}</span>
           <span style="color:#e6f5ff;font-size:13px;font-family:sans-serif">${name}</span>`;
-        btn.onclick = () => { currentPalette = i; document.body.removeChild(overlay); showToast('Palette: ' + name); };
+          btn.onclick = () => { 
+            currentPalette = i;
+            setTurtleColor(PALETTES[name]);
+            setSpinnerColors(PALETTES[name]);
+            document.body.removeChild(overlay); 
+            showToast('Palette: ' + name); 
+          };
         grid.appendChild(btn);
       });
   
       overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
     }
+
+    // ── Sensory Level Picker ───────────────────────────────
+  const STIM_LEVELS = [
+  { key: 'calm',   label: '😌 Calm & Gentle',   desc: 'Soft and slow — easy on the eyes and ears' },
+  { key: 'medium', label: '😊 Just Right',       desc: 'A nice balance — not too much, not too little' },
+  { key: 'high',   label: '🎉 Full of Energy!',  desc: 'Bright and buzzy — lots of colour and movement!' },
+];
+let stimLevel = 'medium';
+
+function applyStimLevel() {
+  if (stimLevel === 'calm') {
+    rippleDelay = 110; maxSparklesPerClick = 2;
+  } else if (stimLevel === 'medium') {
+    rippleDelay = 70; maxSparklesPerClick = 8;
+  } else {
+    rippleDelay = 40; maxSparklesPerClick = 16;
+  }
+  setStarLevel(stimLevel);
+}
+
+let rippleDelay = 70;
+let maxSparklesPerClick = 8;
+
+function showSensoryPicker() {
+  if (document.getElementById('sensoryPicker')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'sensoryPicker';
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    display:flex;align-items:center;justify-content:center;z-index:1000;`;
+  const card = document.createElement('div');
+  card.style.cssText = `background:rgba(18,22,56,0.97);border-radius:22px;padding:28px;
+    border:2px solid rgba(80,130,220,0.4);max-width:420px;width:90%;`;
+  card.innerHTML = `
+    <h2 style="color:#c8e4ff;font-family:sans-serif;margin-bottom:8px;text-align:center">🌟 How are you feeling today?</h2>
+    <p style="color:#7ba2d4;font-family:sans-serif;font-size:13px;text-align:center;margin-bottom:18px">Choose what feels right for you right now</p>
+    <div id="sensoryGrid" style="display:flex;flex-direction:column;gap:10px"></div>`;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const grid = card.querySelector('#sensoryGrid');
+  STIM_LEVELS.forEach(level => {
+    const btn = document.createElement('button');
+    const sel = stimLevel === level.key;
+    btn.style.cssText = `background:${sel?'rgba(50,72,145,0.95)':'rgba(28,36,92,0.8)'};
+      border:2px solid ${sel?'#a0d7ff':'rgba(58,80,162,0.7)'};border-radius:14px;
+      padding:14px 16px;cursor:pointer;text-align:left;width:100%;`;
+    btn.innerHTML = `
+      <div style="color:#e8f5ff;font-family:sans-serif;font-size:16px;font-weight:bold">${level.label} ${sel?'✓':''}</div>
+      <div style="color:#7ba2d4;font-family:sans-serif;font-size:13px;margin-top:4px">${level.desc}</div>`;
+    btn.onclick = () => {
+      stimLevel = level.key;
+      applyStimLevel();
+      document.body.removeChild(overlay);
+      showToast('Sensory level: ' + level.label);
+    };
+    grid.appendChild(btn);
+  });
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+}
 
   
   // ── Hint Bar ───────────────────────────────────────────
@@ -169,7 +236,7 @@
     ctx.fillStyle = 'rgba(125,162,212,0.9)';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('🖱 Click → ripples/sparkles     1 Breathe     2 Fidget spinner     4 Sparkles     6 Colours', 10, y + 14);
+    ctx.fillText('🖱 Click → ripples/sparkles     1 Breathe     2 Fidget     4 Sparkles     5 Sensory     6 Colours', 10, y + 14);
     ctx.fillText('Fidget: scroll to spin fast!', 10, y + 28);
   }
   
@@ -179,13 +246,14 @@
     function loop() {
       ctx.fillStyle = '#0a0a14';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      drawStars(ctx);
+      updateStars(); drawStars(ctx);
       updateRipples(); drawRipples(ctx);
       updateSparkles(); drawSparkles(ctx);
       updateLetterBubbles(); drawLetterBubbles(ctx);
       drawBreathing(ctx, canvas, showToast);
       drawSpinner(ctx, canvas);
-      updateTurtle(); drawTurtle(ctx);
+      updateTurtle();
+      drawTurtle(ctx);
       drawHintBar();
       requestAnimationFrame(loop);
     }
