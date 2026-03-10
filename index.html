@@ -42,7 +42,7 @@
 <canvas id="c"></canvas>
 <script type="module">
   
-    import { initJoystick, drawJoystick } from './MobileUi-Joystick.js';
+    import { initJoystick, drawJoystick, isJoystickActive } from './MobileUi-Joystick.js';
     import { initMobileUI, createMobileButtons } from './mobileUI.js';
     import { PALETTES, paletteNames } from './palettes.js';
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
@@ -104,6 +104,7 @@
 
   function spawnAt(x, y) {
     if (y > canvas.height - 36) return;
+    if (isJoystickActive()) return;
     const now = performance.now();
     if (now - lastSpawn < rippleDelay) return;
     lastSpawn = now;
