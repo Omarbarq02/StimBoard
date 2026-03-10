@@ -47,7 +47,13 @@
   function dismissPicker(mode) {
     deviceMode = mode;
     document.getElementById('devicePicker').style.display = 'none';
-    if (mode === 'mobile') createMobileButtons();
+    if (mode === 'mobile') {
+      // performance limits for mobile
+      rippleDelay = 100;
+      maxSparklesPerClick = 3;
+      setStarLevel('calm');
+      createMobileButtons();
+    }
   }
 
   document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
@@ -116,7 +122,8 @@
       if (now - lastSpawn < rippleDelay) return;
       lastSpawn = now;
       if (sparkleMode) { 
-        for (let i = 0; i < maxSparklesPerClick; i++) spawnSparkle(x, y, randColor);
+        const cap = deviceMode === 'mobile' ? Math.min(maxSparklesPerClick, 3) : maxSparklesPerClick;
+        for (let i = 0; i < cap; i++) spawnSparkle(x, y, randColor);
         playSparkle();
       } else {
         spawnRipple(x, y, randColor);
@@ -140,9 +147,11 @@
         e.preventDefault();
         keyDown(e.key, canvas.width, canvas.height, (x, y) => {
           if (sparkleMode) { 
-            for (let i = 0; i < 20; i++) spawnSparkle(x, y, randColor); 
+            const burst = deviceMode === 'mobile' ? 8 : 20;
+            for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor); 
             playSparkle(); 
-          } else { 
+          }
+           else { 
             spawnRipple(x, y, randColor); 
             playPlink(); 
           }
