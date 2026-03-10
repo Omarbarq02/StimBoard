@@ -56,38 +56,6 @@
 
   // ── Device Picker ──────────────────────────────────────
   let deviceMode = null;
-
-  function dismissPicker(mode) {
-      deviceMode = mode;
-      document.getElementById('devicePicker').style.display = 'none';
-      if (mode === 'mobile') {
-        initJoystick((key) => {
-          const pos = { x: 0, y: 0 };
-          // reuse keyDown from turtle
-          keyDown(key, canvas.width, canvas.height, (x, y) => {
-            if (sparkleMode) {
-              const burst = 8;
-              for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor);
-              playSparkle();
-            } else {
-              spawnRipple(x, y, randColor);
-              playPlink();
-            }
-          });
-          setTimeout(() => keyUp(key), 50);
-        });
-        // performance limits for mobile
-        rippleDelay = 100;
-        maxSparklesPerClick = 3;
-        setStarLevel('calm');
-        createMobileButtons();
-      }
-    }
-  document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
-  document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
-
-    
-
     let currentPalette = 0;
     let sparkleMode = false;
     function getSparkleMode() { return sparkleMode; }
@@ -131,70 +99,58 @@
   
   
     // ── Mouse / Touch ──────────────────────────────────────
-    let mouseDown = false;
-    let lastSpawn = 0;
-  
-    function spawnAt(x, y) {
-      if (y > canvas.height - 36) return;
-      const now = performance.now();
-      if (now - lastSpawn < rippleDelay) return;
-      lastSpawn = now;
-      if (sparkleMode) { 
-        for (let i = 0; i < maxSparklesPerClick; i++) spawnSparkle(x, y, randColor);
-        playSparkle();
-      } else {
-        spawnRipple(x, y, randColor);
-        playPlink();
-      }
+  let mouseDown = false;
+  let lastSpawn = 0;
+
+  function spawnAt(x, y) {
+    if (y > canvas.height - 36) return;
+    const now = performance.now();
+    if (now - lastSpawn < rippleDelay) return;
+    lastSpawn = now;
+    if (sparkleMode) {
+      const cap = deviceMode === 'mobile' ? Math.min(maxSparklesPerClick, 3) : maxSparklesPerClick;
+      for (let i = 0; i < cap; i++) spawnSparkle(x, y, randColor);
+      playSparkle();
+    } else {
+      spawnRipple(x, y, randColor);
+      playPlink();
     }
-  
-    canvas.addEventListener('mousedown', e => { mouseDown = true; spawnAt(e.clientX, e.clientY); });
+  }
 
-    canvas.addEventListener('mouseup',   () => mouseDown = false);
-    
-    canvas.addEventListener('mousemove', e => { if (mouseDown) spawnAt(e.clientX, e.clientY); });
-    
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
-    
-    canvas.addEventListener('touchmove',  e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
-    
-    
-    document.addEventListener('keydown', e => {
-      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-        e.preventDefault();
-        keyDown(e.key, canvas.width, canvas.height, (x, y) => {
-          if (sparkleMode) { 
-            for (let i = 0; i < 20; i++) spawnSparkle(x, y, randColor); 
-            playSparkle(); 
-          } else { 
-            spawnRipple(x, y, randColor); 
-            playPlink(); 
-          }
-        });
-      }
-        if (e.key === '1') toggleBreathing(showToast);
-        if (e.key === '2') { toggleSpinner(); showToast('🌀 Fidget spinner ' + (isSpinnerOn() ? 'on — scroll to spin!' : 'off')); }
-        if (e.key === '4') {
-          sparkleMode = !sparkleMode;
-          showToast('✨ Sparkle mode ' + (sparkleMode ? 'on' : 'off'));
+  canvas.addEventListener('mousedown', e => { mouseDown = true; spawnAt(e.clientX, e.clientY); });
+  canvas.addEventListener('mouseup',   () => mouseDown = false);
+  canvas.addEventListener('mousemove', e => { if (mouseDown) spawnAt(e.clientX, e.clientY); });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      keyDown(e.key, canvas.width, canvas.height, (x, y) => {
+        if (sparkleMode) {
+          const burst = deviceMode === 'mobile' ? 8 : 20;
+          for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor);
+          playSparkle();
+        } else {
+          spawnRipple(x, y, randColor);
+          playPlink();
         }
-        if (e.key === '5') showSensoryPicker();
-        if (e.key === '6') showColourPicker();
-        
-        if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
-            spawnLetterBubble(e.key.toUpperCase(), canvas.width, canvas.height, randColor);
-            if (sparkleMode) playSparkle();
-            else playPlink();
-          }
-
-         
       });
+    }
+    if (e.key === '1') toggleBreathing(showToast);
+    if (e.key === '2') { toggleSpinner(); showToast('🌀 Fidget spinner ' + (isSpinnerOn() ? 'on — scroll to spin!' : 'off')); }
+    if (e.key === '4') { sparkleMode = !sparkleMode; showToast('✨ Sparkle mode ' + (sparkleMode ? 'on' : 'off')); }
+    if (e.key === '5') showSensoryPicker();
+    if (e.key === '6') showColourPicker();
+    if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+      spawnLetterBubble(e.key.toUpperCase(), canvas.width, canvas.height, randColor);
+      if (sparkleMode) playSparkle();
+      else playPlink();
+    }
+  });
 
-    
-    
-      document.addEventListener('keyup', e => {
-        keyUp(e.key);
-      });
+  document.addEventListener('keyup', e => { keyUp(e.key); });
+  window.addEventListener('wheel', handleScroll);
   
     // ── Toast ──────────────────────────────────────────────
     function showToast(msg) {
@@ -323,6 +279,45 @@ function showSensoryPicker() {
   }
   
   window.addEventListener('wheel', handleScroll);
+
+  // ── Device Picker ──────────────────────────────────────
+  function dismissPicker(mode) {
+    deviceMode = mode;
+    document.getElementById('devicePicker').style.display = 'none';
+    if (mode === 'mobile') {
+      rippleDelay = 100;
+      maxSparklesPerClick = 3;
+      setStarLevel('calm');
+      createMobileButtons();
+      initJoystick((key) => {
+        keyDown(key, canvas.width, canvas.height, (x, y) => {
+          if (sparkleMode) {
+            for (let i = 0; i < 8; i++) spawnSparkle(x, y, randColor);
+            playSparkle();
+          } else {
+            spawnRipple(x, y, randColor);
+            playPlink();
+          }
+        });
+        setTimeout(() => keyUp(key), 50);
+      });
+    }
+  }
+
+  document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
+  document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
+
+  // ── init mobile UI ─────────────────────────────────────
+  initMobileUI({
+    showToast,
+    toggleBreathing,
+    toggleSpinner,
+    isSpinnerOn,
+    setSparkleMode,
+    getSparkleMode,
+    showSensoryPicker,
+    showColourPicker,
+  });
   
     // ── Loop ───────────────────────────────────────────────
     function loop() {
