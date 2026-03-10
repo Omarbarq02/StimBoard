@@ -75,7 +75,8 @@ function _doMove(dx, dy) {
   onMoveCallback(key);
 }
 
-export function drawJoystick(ctx) {
+export function drawJoystick(ctx, turtleOn) {
+    if (!turtleOn) return;
     // always show a faint hint in bottom-left
     const hintX = 100;
     const hintY = window.innerHeight - 120;

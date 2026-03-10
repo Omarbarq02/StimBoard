@@ -43,7 +43,7 @@
 <script type="module">
   
     import { initJoystick, drawJoystick, isJoystickActive } from './MobileUi-Joystick.js';
-    import { initMobileUI, createMobileButtons } from './mobileUI.js';
+    import { initMobileUI, createMobileButtons, isTurtleOn } from './mobileUI.js';
     import { PALETTES, paletteNames } from './palettes.js';
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
     import { toggleBreathing, drawBreathing } from './breathing.js';
@@ -104,7 +104,7 @@
 
   function spawnAt(x, y) {
     if (y > canvas.height - 36) return;
-    if (isJoystickActive()) return;
+    if (isTurtleOn() && isJoystickActive()) return;
     const now = performance.now();
     if (now - lastSpawn < rippleDelay) return;
     lastSpawn = now;
@@ -330,8 +330,8 @@ function showSensoryPicker() {
       updateLetterBubbles(); drawLetterBubbles(ctx);
       drawBreathing(ctx, canvas, showToast);
       drawSpinner(ctx, canvas);
-      updateTurtle();
-      drawTurtle(ctx);
+      if (deviceMode !== 'mobile' || isTurtleOn()) updateTurtle();
+      if (deviceMode !== 'mobile' || isTurtleOn()) drawTurtle(ctx);
       drawJoystick(ctx);
       drawHintBar();
       requestAnimationFrame(loop);
