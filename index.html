@@ -45,36 +45,34 @@
   let deviceMode = null;
 
   function dismissPicker(mode) {
-    deviceMode = mode;
-    document.getElementById('devicePicker').style.display = 'none';
-    if (mode === 'mobile') {
-      initJoystick((key) => {
-        const pos = { x: 0, y: 0 };
-        // reuse keyDown from turtle
-        keyDown(key, canvas.width, canvas.height, (x, y) => {
-          if (sparkleMode) {
-            const burst = 8;
-            for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor);
-            playSparkle();
-          } else {
-            spawnRipple(x, y, randColor);
-            playPlink();
-          }
+      deviceMode = mode;
+      document.getElementById('devicePicker').style.display = 'none';
+      if (mode === 'mobile') {
+        initJoystick((key) => {
+          const pos = { x: 0, y: 0 };
+          // reuse keyDown from turtle
+          keyDown(key, canvas.width, canvas.height, (x, y) => {
+            if (sparkleMode) {
+              const burst = 8;
+              for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor);
+              playSparkle();
+            } else {
+              spawnRipple(x, y, randColor);
+              playPlink();
+            }
+          });
+          setTimeout(() => keyUp(key), 50);
         });
-        setTimeout(() => keyUp(key), 50);
-      });
-      // performance limits for mobile
-      rippleDelay = 100;
-      maxSparklesPerClick = 3;
-      setStarLevel('calm');
-      createMobileButtons();
+        // performance limits for mobile
+        rippleDelay = 100;
+        maxSparklesPerClick = 3;
+        setStarLevel('calm');
+        createMobileButtons();
+      }
     }
-  }
-
   document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
   document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
 
-    import { initJoystick, drawJoystick } from './joystick.js';
     import { initMobileUI, createMobileButtons } from './mobileUI.js';
     import { PALETTES, paletteNames } from './palettes.js';
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
@@ -138,8 +136,7 @@
       if (now - lastSpawn < rippleDelay) return;
       lastSpawn = now;
       if (sparkleMode) { 
-        const cap = deviceMode === 'mobile' ? Math.min(maxSparklesPerClick, 3) : maxSparklesPerClick;
-        for (let i = 0; i < cap; i++) spawnSparkle(x, y, randColor);
+        for (let i = 0; i < maxSparklesPerClick; i++) spawnSparkle(x, y, randColor);
         playSparkle();
       } else {
         spawnRipple(x, y, randColor);
@@ -163,11 +160,9 @@
         e.preventDefault();
         keyDown(e.key, canvas.width, canvas.height, (x, y) => {
           if (sparkleMode) { 
-            const burst = deviceMode === 'mobile' ? 8 : 20;
-            for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor); 
+            for (let i = 0; i < 20; i++) spawnSparkle(x, y, randColor); 
             playSparkle(); 
-          }
-           else { 
+          } else { 
             spawnRipple(x, y, randColor); 
             playPlink(); 
           }
@@ -338,7 +333,6 @@ function showSensoryPicker() {
       updateTurtle();
       drawTurtle(ctx);
       drawJoystick(ctx);
-      drawHintBar();
       drawHintBar();
       requestAnimationFrame(loop);
     }
