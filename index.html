@@ -121,9 +121,20 @@
   canvas.addEventListener('mousedown', e => { mouseDown = true; spawnAt(e.clientX, e.clientY); });
   canvas.addEventListener('mouseup',   () => mouseDown = false);
   canvas.addEventListener('mousemove', e => { if (mouseDown) spawnAt(e.clientX, e.clientY); });
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); spawnAt(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (isTurtleOn() && t.clientX < window.innerWidth * 0.4 && t.clientY > window.innerHeight * 0.4) return;
+    spawnAt(t.clientX, t.clientY);
+  }, {passive: false});
 
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    if (isTurtleOn() && t.clientX < window.innerWidth * 0.4 && t.clientY > window.innerHeight * 0.4) return;
+    spawnAt(t.clientX, t.clientY);
+  }, {passive: false});
+  
   document.addEventListener('keydown', e => {
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
       e.preventDefault();

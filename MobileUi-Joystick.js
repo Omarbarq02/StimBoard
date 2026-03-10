@@ -15,11 +15,8 @@ const STEP_INTERVAL = 150;
 export function initJoystick(onMove) {
   onMoveCallback = onMove;
 
-  const canvas = document.getElementById('c');
-
-  canvas.addEventListener('touchstart', e => {
+  document.addEventListener('touchstart', e => {
     for (const t of e.changedTouches) {
-      // activate joystick anywhere in bottom-left 40% width, bottom 50% height
       if (t.clientX < window.innerWidth * 0.4 && t.clientY > window.innerHeight * 0.4) {
         joystickActive = true;
         joystickTouchId = t.identifier;
@@ -29,47 +26,37 @@ export function initJoystick(onMove) {
         joystickThumb.y = t.clientY;
         lastDx = 0;
         lastDy = 0;
-        // prevent ripple
-        e.stopPropagation();
-        e.preventDefault();
         return;
       }
     }
-  }, { passive: false });
+  }, { passive: true });
 
-  canvas.addEventListener('touchmove', e => {
+  document.addEventListener('touchmove', e => {
     if (!joystickActive) return;
-    e.preventDefault();
     for (const t of e.changedTouches) {
       if (t.identifier !== joystickTouchId) continue;
-
       const dx = t.clientX - joystickBase.x;
       const dy = t.clientY - joystickBase.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const capped = Math.min(dist, BASE_R);
       const angle = Math.atan2(dy, dx);
-
       joystickThumb.x = joystickBase.x + Math.cos(angle) * capped;
       joystickThumb.y = joystickBase.y + Math.sin(angle) * capped;
-
-      // update direction continuously
       lastDx = dx;
       lastDy = dy;
-
       if (dist > DEAD_ZONE) {
         if (!moveInterval) {
           _doMove(dx, dy);
           moveInterval = setInterval(() => _doMove(lastDx, lastDy), STEP_INTERVAL);
         }
       } else {
-        // back in dead zone — stop moving
         clearInterval(moveInterval);
         moveInterval = null;
       }
     }
-  }, { passive: false });
+  }, { passive: true });
 
-  canvas.addEventListener('touchend', e => {
+  document.addEventListener('touchend', e => {
     for (const t of e.changedTouches) {
       if (t.identifier === joystickTouchId) {
         joystickActive = false;
@@ -103,7 +90,6 @@ export function drawJoystick(ctx, turtleOn) {
   const hintX = 90;
   const hintY = window.innerHeight - 120;
 
-  // faint base hint
   ctx.beginPath();
   ctx.arc(hintX, hintY, BASE_R, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(80,120,220,0.08)';
@@ -112,7 +98,6 @@ export function drawJoystick(ctx, turtleOn) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // faint thumb hint
   ctx.beginPath();
   ctx.arc(hintX, hintY, THUMB_R, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(120,170,255,0.15)';
@@ -121,7 +106,6 @@ export function drawJoystick(ctx, turtleOn) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // label
   ctx.fillStyle = 'rgba(160,196,232,0.5)';
   ctx.font = '12px sans-serif';
   ctx.textAlign = 'center';
@@ -129,7 +113,6 @@ export function drawJoystick(ctx, turtleOn) {
 
   if (!joystickActive) return;
 
-  // active base
   ctx.beginPath();
   ctx.arc(joystickBase.x, joystickBase.y, BASE_R, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(80,120,220,0.22)';
@@ -138,7 +121,6 @@ export function drawJoystick(ctx, turtleOn) {
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // active thumb
   ctx.beginPath();
   ctx.arc(joystickThumb.x, joystickThumb.y, THUMB_R, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(120,170,255,0.7)';
