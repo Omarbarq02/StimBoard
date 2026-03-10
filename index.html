@@ -11,9 +11,49 @@
   </style>
 </head>
 <body>
+  <div id="devicePicker" style="
+  position:fixed;inset:0;background:#0a0a14;
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;flex-direction:column;gap:24px;">
+  <div style="text-align:center;margin-bottom:8px;">
+    <div style="font-size:36px">✦</div>
+    <h1 style="color:#c8e4ff;font-family:sans-serif;font-size:28px;margin:8px 0">Visual Stim Board</h1>
+    <p style="color:#7ba2d4;font-family:sans-serif;font-size:15px">What are you using today?</p>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+    <button id="btnDesktop" style="
+      background:rgba(28,36,92,0.9);border:2px solid rgba(80,130,220,0.6);
+      border-radius:18px;padding:28px 36px;cursor:pointer;text-align:center;
+      min-width:160px;transition:border-color 0.2s;">
+      <div style="font-size:48px">💻</div>
+      <div style="color:#e8f5ff;font-family:sans-serif;font-size:17px;font-weight:bold;margin-top:10px">Laptop / Computer</div>
+      <div style="color:#7ba2d4;font-family:sans-serif;font-size:12px;margin-top:4px">Keyboard & mouse</div>
+    </button>
+    <button id="btnMobile" style="
+      background:rgba(28,36,92,0.9);border:2px solid rgba(80,130,220,0.6);
+      border-radius:18px;padding:28px 36px;cursor:pointer;text-align:center;
+      min-width:160px;transition:border-color 0.2s;">
+      <div style="font-size:48px">📱</div>
+      <div style="color:#e8f5ff;font-family:sans-serif;font-size:17px;font-weight:bold;margin-top:10px">Phone / Tablet</div>
+      <div style="color:#7ba2d4;font-family:sans-serif;font-size:12px;margin-top:4px">Touch screen</div>
+    </button>
+  </div>
+</div>
 <canvas id="c"></canvas>
 <script type="module">
+  // ── Device Picker ──────────────────────────────────────
+  let deviceMode = null;
 
+  function dismissPicker(mode) {
+    deviceMode = mode;
+    document.getElementById('devicePicker').style.display = 'none';
+    if (mode === 'mobile') createMobileButtons();
+  }
+
+  document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
+  document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
+
+    import { initMobileUI, createMobileButtons } from './mobileUI.js';
     import { PALETTES, paletteNames } from './palettes.js';
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
     import { toggleBreathing, drawBreathing } from './breathing.js';
@@ -26,6 +66,8 @@
 
     let currentPalette = 0;
     let sparkleMode = false;
+    function getSparkleMode() { return sparkleMode; }
+    function setSparkleMode(v) { sparkleMode = v; }
 
     function randColor() {
       const cols = PALETTES[paletteNames[currentPalette]];
@@ -36,6 +78,22 @@
 
     loadSound('./sound1.mp3');
     loadSparkleSound('./sparkle.wav');
+    
+    initMobileUI({
+      showToast,
+      toggleBreathing,
+      toggleSpinner,
+      isSpinnerOn,
+      setSparkleMode,
+      getSparkleMode,
+      showSensoryPicker,
+      showColourPicker,
+    });
+
+    if (deviceMode === 'mobile') {
+      createMobileButtons();
+    }
+
     const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
   

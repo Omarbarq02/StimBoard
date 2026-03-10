@@ -54,7 +54,7 @@ export function drawBreathing(ctx, canvas, showToast) {
   lastBreathPhase = phase;
 
   const smooth = (phase === 'inhale' || phase === 'exhale') ? easeInOut(frac) : frac;
-  const minR = 45, maxR = 120;
+  const minR = 48, maxR = 129;
   const radius = minR + (maxR - minR) * smooth;
   const alpha = phase === 'pause' ? 0.27 : 0.67;
   const cx = canvas.width / 2;
