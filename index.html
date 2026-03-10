@@ -41,6 +41,19 @@
 </div>
 <canvas id="c"></canvas>
 <script type="module">
+  
+    import { initJoystick, drawJoystick } from './MobileUi-Joystick.js';
+    import { initMobileUI, createMobileButtons } from './mobileUI.js';
+    import { PALETTES, paletteNames } from './palettes.js';
+    import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
+    import { toggleBreathing, drawBreathing } from './breathing.js';
+    import { spawnLetterBubble, updateLetterBubbles, drawLetterBubbles } from './letters.js';
+    import { keyDown, keyUp, updateTurtle, drawTurtle, setTurtleColor } from './turtle.js';
+    import { toggleSpinner, isSpinnerOn, handleScroll, drawSpinner, setSpinnerColors } from './spinner.js';
+    import { spawnSparkle, updateSparkles, drawSparkles } from './sparkles.js';
+    import { spawnRipple, updateRipples, drawRipples } from './ripples.js';
+    import { drawStars, updateStars, setStarLevel } from './stars.js';
+
   // ── Device Picker ──────────────────────────────────────
   let deviceMode = null;
 
@@ -73,16 +86,7 @@
   document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
   document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
 
-    import { initMobileUI, createMobileButtons } from './mobileUI.js';
-    import { PALETTES, paletteNames } from './palettes.js';
-    import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
-    import { toggleBreathing, drawBreathing } from './breathing.js';
-    import { spawnLetterBubble, updateLetterBubbles, drawLetterBubbles } from './letters.js';
-    import { keyDown, keyUp, updateTurtle, drawTurtle, setTurtleColor } from './turtle.js';
-    import { toggleSpinner, isSpinnerOn, handleScroll, drawSpinner, setSpinnerColors } from './spinner.js';
-    import { spawnSparkle, updateSparkles, drawSparkles } from './sparkles.js';
-    import { spawnRipple, updateRipples, drawRipples } from './ripples.js';
-    import { drawStars, updateStars, setStarLevel } from './stars.js';
+    
 
     let currentPalette = 0;
     let sparkleMode = false;
