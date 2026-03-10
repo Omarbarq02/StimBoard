@@ -48,6 +48,21 @@
     deviceMode = mode;
     document.getElementById('devicePicker').style.display = 'none';
     if (mode === 'mobile') {
+      initJoystick((key) => {
+        const pos = { x: 0, y: 0 };
+        // reuse keyDown from turtle
+        keyDown(key, canvas.width, canvas.height, (x, y) => {
+          if (sparkleMode) {
+            const burst = 8;
+            for (let i = 0; i < burst; i++) spawnSparkle(x, y, randColor);
+            playSparkle();
+          } else {
+            spawnRipple(x, y, randColor);
+            playPlink();
+          }
+        });
+        setTimeout(() => keyUp(key), 50);
+      });
       // performance limits for mobile
       rippleDelay = 100;
       maxSparklesPerClick = 3;
@@ -59,6 +74,7 @@
   document.getElementById('btnDesktop').onclick = () => dismissPicker('desktop');
   document.getElementById('btnMobile').onclick  = () => dismissPicker('mobile');
 
+    import { initJoystick, drawJoystick } from './joystick.js';
     import { initMobileUI, createMobileButtons } from './mobileUI.js';
     import { PALETTES, paletteNames } from './palettes.js';
     import { loadSound, playPlink, loadSparkleSound, playSparkle } from './sound.js';
@@ -321,6 +337,8 @@ function showSensoryPicker() {
       drawSpinner(ctx, canvas);
       updateTurtle();
       drawTurtle(ctx);
+      drawJoystick(ctx);
+      drawHintBar();
       drawHintBar();
       requestAnimationFrame(loop);
     }
