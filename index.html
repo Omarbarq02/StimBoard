@@ -134,7 +134,7 @@
     if (isTurtleOn() && t.clientX < window.innerWidth * 0.4 && t.clientY > window.innerHeight * 0.4) return;
     spawnAt(t.clientX, t.clientY);
   }, {passive: false});
-  
+
   document.addEventListener('keydown', e => {
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
       e.preventDefault();
@@ -297,8 +297,8 @@ function showSensoryPicker() {
     deviceMode = mode;
     document.getElementById('devicePicker').style.display = 'none';
     if (mode === 'mobile') {
-      rippleDelay = 100;
-      maxSparklesPerClick = 3;
+      rippleDelay = 150;
+      maxSparklesPerClick = 1;
       setStarLevel('calm');
       createMobileButtons();
       initJoystick((key) => {
@@ -332,23 +332,34 @@ function showSensoryPicker() {
   });
   
     // ── Loop ───────────────────────────────────────────────
-    function loop() {
-      ctx.fillStyle = '#0a0a14';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      updateStars(); drawStars(ctx);
-      updateRipples(); drawRipples(ctx);
-      updateSparkles(); drawSparkles(ctx);
-      updateLetterBubbles(); drawLetterBubbles(ctx);
-      drawBreathing(ctx, canvas, showToast);
-      drawSpinner(ctx, canvas);
-      if (deviceMode !== 'mobile' || isTurtleOn()) updateTurtle();
-      if (deviceMode !== 'mobile' || isTurtleOn()) drawTurtle(ctx);
-      drawJoystick(ctx);
-      drawHintBar();
-      requestAnimationFrame(loop);
+    let lastFrame = 0;
+  const MOBILE_FPS = 30;
+
+  function loop(timestamp) {
+    if (deviceMode === 'mobile') {
+      if (timestamp - lastFrame < 1000 / MOBILE_FPS) {
+        requestAnimationFrame(loop);
+        return;
+      }
+      lastFrame = timestamp;
     }
-  
-    loop();
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    updateStars(); drawStars(ctx);
+    updateRipples(); drawRipples(ctx);
+    updateSparkles(); drawSparkles(ctx);
+    updateLetterBubbles(); drawLetterBubbles(ctx);
+    drawBreathing(ctx, canvas, showToast);
+    drawSpinner(ctx, canvas);
+    if (deviceMode !== 'mobile' || isTurtleOn()) updateTurtle();
+    if (deviceMode !== 'mobile' || isTurtleOn()) drawTurtle(ctx);
+    drawJoystick(ctx, isTurtleOn());
+    drawHintBar();
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+
 </script>
 </body>
 </html>
