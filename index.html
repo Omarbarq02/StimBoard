@@ -292,14 +292,17 @@ function showSensoryPicker() {
   
   window.addEventListener('wheel', handleScroll);
 
+  let starsEnabled = true;
   // ── Device Picker ──────────────────────────────────────
   function dismissPicker(mode) {
+    
     deviceMode = mode;
     document.getElementById('devicePicker').style.display = 'none';
     if (mode === 'mobile') {
       rippleDelay = 150;
       maxSparklesPerClick = 1;
       setStarLevel('calm');
+      starsEnabled = false;
       createMobileButtons();
       initJoystick((key) => {
         keyDown(key, canvas.width, canvas.height, (x, y) => {
@@ -333,7 +336,7 @@ function showSensoryPicker() {
   
     // ── Loop ───────────────────────────────────────────────
     let lastFrame = 0;
-  const MOBILE_FPS = 30;
+  const MOBILE_FPS = 10;
 
   function loop(timestamp) {
     if (deviceMode === 'mobile') {
@@ -345,10 +348,10 @@ function showSensoryPicker() {
     }
     ctx.fillStyle = '#0a0a14';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    updateStars(); drawStars(ctx);
+    if (starsEnabled) { updateStars(); drawStars(ctx); }
     updateRipples(); drawRipples(ctx);
     updateSparkles(); drawSparkles(ctx);
-    updateLetterBubbles(); drawLetterBubbles(ctx);
+    if (deviceMode !== 'mobile') { updateLetterBubbles(); drawLetterBubbles(ctx); }
     drawBreathing(ctx, canvas, showToast);
     drawSpinner(ctx, canvas);
     if (deviceMode !== 'mobile' || isTurtleOn()) updateTurtle();

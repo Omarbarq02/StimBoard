@@ -85,47 +85,24 @@ function _doMove(dx, dy) {
 export function isJoystickActive() { return joystickActive; }
 
 export function drawJoystick(ctx, turtleOn) {
-  if (!turtleOn) return;
-
-  const hintX = 90;
-  const hintY = window.innerHeight - 120;
-
-  ctx.beginPath();
-  ctx.arc(hintX, hintY, BASE_R, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(80,120,220,0.08)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(120,170,255,0.25)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(hintX, hintY, THUMB_R, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(120,170,255,0.15)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(200,230,255,0.3)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.fillStyle = 'rgba(160,196,232,0.5)';
-  ctx.font = '12px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🐢 drag', hintX, hintY + BASE_R + 16);
-
-  if (!joystickActive) return;
-
-  ctx.beginPath();
-  ctx.arc(joystickBase.x, joystickBase.y, BASE_R, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(80,120,220,0.22)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(120,170,255,0.6)';
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(joystickThumb.x, joystickThumb.y, THUMB_R, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(120,170,255,0.7)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(200,230,255,0.9)';
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-}
+    if (!turtleOn) return;
+    if (!joystickActive) return;
+  
+    // active base
+    ctx.beginPath();
+    ctx.arc(joystickBase.x, joystickBase.y, BASE_R, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(80,120,220,0.22)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120,170,255,0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  
+    // active thumb
+    ctx.beginPath();
+    ctx.arc(joystickThumb.x, joystickThumb.y, THUMB_R, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(120,170,255,0.7)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200,230,255,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
